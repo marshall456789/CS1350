@@ -1,12 +1,5 @@
 # CS1350 Mini-Project 1: Contact Manager
-# Dictionaries & Dictionary Patterns
 
-
-# ============================================================
-# DATA PROVIDED BY THE ASSIGNMENT
-# ============================================================
-
-# Contact records: name -> dictionary of details
 contact_book = {
     "Mom": {"phone": "555-1234", "category": "Family", "city": "Fort Wayne"},
     "Dad": {"phone": "555-4321", "category": "Family", "city": "Fort Wayne"},
