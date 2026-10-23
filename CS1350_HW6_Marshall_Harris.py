@@ -129,3 +129,307 @@ if __name__ == "__main__":
         bad = CommissionEmployee("Bad", "E999", 1000, 5000, 1.5)
     except ValueError as e:
         print(f" Caught: {e}")
+        
+        
+
+
+
+class Song:
+    total_songs = 0
+
+    def __init__(self, title, artist, duration_seconds):
+        self.title = title
+        self.artist = artist
+        self.duration_seconds = duration_seconds
+        Song.total_songs += 1
+
+    def display(self):
+        duration = self.format_duration(self.duration_seconds)
+        return f"{self.title} - {self.artist} ({duration})"
+
+    @classmethod
+    def from_string(cls, s):
+        parts = s.split(" | ")
+        title = parts[0]
+        artist = parts[1]
+        duration = cls.parse_duration(parts[2])
+        return cls(title, artist, duration)
+
+    @classmethod
+    def get_total_songs(cls):
+        return cls.total_songs
+
+    @staticmethod
+    def format_duration(seconds):
+        minutes = seconds // 60
+        remaining_seconds = seconds % 60
+        return f"{minutes}:{remaining_seconds:02d}"
+
+    @staticmethod
+    def parse_duration(duration_str):
+        parts = duration_str.split(":")
+        minutes = int(parts[0])
+        seconds = int(parts[1])
+        return minutes * 60 + seconds
+
+
+class Playlist:
+    total_playlists = 0
+
+    def __init__(self, name):
+        Playlist.total_playlists += 1
+        self.name = name
+        self.playlist_id = f"PL_{Playlist.total_playlists:03d}"
+        self.songs = []
+
+    def add_song(self, song):
+        self.songs.append(song)
+
+    def total_duration(self):
+        total = 0
+
+        for song in self.songs:
+            total += song.duration_seconds
+
+        return total
+
+    def display(self):
+        count = len(self.songs)
+        duration = Song.format_duration(self.total_duration())
+        return f"Playlist: {self.name} ({count} songs, {duration})"
+
+    @classmethod
+    def get_total_playlists(cls):
+        return cls.total_playlists
+
+
+class LibraryManager:
+    @staticmethod
+    def create_playlist_from_strings(name, song_strings):
+        playlist = Playlist(name)
+
+        for song_string in song_strings:
+            song = Song.from_string(song_string)
+            playlist.add_song(song)
+
+        return playlist
+
+    @staticmethod
+    def format_library_report(playlists):
+        report = ["=== LIBRARY REPORT ==="]
+
+        for playlist in playlists:
+            report.append(f"Playlist: {playlist.name}")
+
+            for index, song in enumerate(playlist.songs, start=1):
+                report.append(f"  {index}. {song.display()}")
+
+            duration = Song.format_duration(playlist.total_duration())
+            report.append(f"  Duration: {duration}")
+            report.append("")
+
+        report.append(f"Total Songs: {Song.get_total_songs()}")
+        report.append("======================")
+
+        return "\n".join(report)
+
+
+# Test code
+if __name__ == "__main__":
+    s1 = Song("Bohemian Rhapsody", "Queen", 354)
+    s2 = Song("Imagine", "John Lennon", 187)
+
+    print("Individual Songs:")
+    print(f" {s1.display()}")
+    print(f" {s2.display()}")
+
+    s3 = Song.from_string("Hotel California | Eagles | 6:31")
+    print(f" {s3.display()}")
+
+    print(f"\nFormat 245 seconds: {Song.format_duration(245)}")
+    print(f"Parse '4:05': {Song.parse_duration('4:05')} seconds")
+
+    playlist = Playlist("Classic Rock")
+    playlist.add_song(s1)
+    playlist.add_song(s2)
+    playlist.add_song(s3)
+    print(f"\n{playlist.display()}")
+
+    chill_songs = [
+        "Weightless | Marconi Union | 8:09",
+        "Electra | Airstream | 5:51",
+        "Mellomaniac | DJ Shah | 7:34"
+    ]
+
+    chill = LibraryManager.create_playlist_from_strings(
+        "Chill Vibes", chill_songs
+    )
+    print(chill.display())
+
+    print(f"\n{LibraryManager.format_library_report([playlist, chill])}")
+    print(f"Total songs created: {Song.get_total_songs()}")
+    print(f"Total playlists created: {Playlist.get_total_playlists()}")
+
+
+
+
+class GradeBook:
+    def __init__(self, course_name):
+        self.course_name = course_name
+        self.grades = {}
+
+    def __str__(self):
+        return f"GradeBook: {self.course_name} ({len(self)} students)"
+
+    def __repr__(self):
+        return f"GradeBook('{self.course_name}')"
+
+    def __len__(self):
+        return len(self.grades)
+
+    def __getitem__(self, student):
+        return self.grades[student]
+
+    def __setitem__(self, student, grade):
+        if grade < 0 or grade > 100:
+            raise ValueError("Grade must be between 0 and 100")
+
+        self.grades[student] = grade
+
+    def __contains__(self, student):
+        return student in self.grades
+
+    def __iter__(self):
+        return iter(self.grades)
+
+    def __bool__(self):
+        return len(self.grades) > 0
+
+    @property
+    def average(self):
+        if len(self.grades) == 0:
+            return 0.0
+
+        return sum(self.grades.values()) / len(self.grades)
+
+    def __add__(self, other):
+        combined = GradeBook(
+            f"{self.course_name} + {other.course_name}"
+        )
+
+        combined.grades = self.grades.copy()
+
+        for student, grade in other.grades.items():
+            if student not in combined.grades:
+                combined.grades[student] = grade
+            elif grade > combined.grades[student]:
+                combined.grades[student] = grade
+
+        return combined
+
+    def __iadd__(self, other):
+        for student, grade in other.grades.items():
+            if student not in self.grades:
+                self.grades[student] = grade
+            elif grade > self.grades[student]:
+                self.grades[student] = grade
+
+        return self
+
+    def __mul__(self, factor):
+        curved = GradeBook(f"{self.course_name} (curved)")
+
+        for student, grade in self.grades.items():
+            curved_grade = min(grade * factor, 100)
+            curved.grades[student] = curved_grade
+
+        return curved
+
+    def __eq__(self, other):
+        if not isinstance(other, GradeBook):
+            return NotImplemented
+
+        return abs(self.average - other.average) <= 0.01
+
+    def __lt__(self, other):
+        if not isinstance(other, GradeBook):
+            return NotImplemented
+
+        return self.average < other.average
+
+    def __le__(self, other):
+        if not isinstance(other, GradeBook):
+            return NotImplemented
+
+        return self < other or self == other
+
+
+# Test code
+if __name__ == "__main__":
+    print("=== Part A: Container Protocol ===")
+    cs101 = GradeBook("CS 101")
+
+    cs101["Alice"] = 92
+    cs101["Bob"] = 78
+    cs101["Carol"] = 88
+    cs101["David"] = 95
+
+    print(cs101)
+    print(repr(cs101))
+    print(f"Alice's grade: {cs101['Alice']}")
+    print(f"Bob enrolled? {'Bob' in cs101}")
+    print(f"Eve enrolled? {'Eve' in cs101}")
+    print(f"Class size: {len(cs101)}")
+
+    print("Students:")
+    for student in cs101:
+        print(f" {student}: {cs101[student]}")
+
+    empty = GradeBook("Empty")
+    print(f"cs101 has students? {bool(cs101)}")
+    print(f"empty has students? {bool(empty)}")
+
+    print("\nValidation test:")
+    try:
+        cs101["Eve"] = 150
+    except ValueError as e:
+        print(f" Caught: {e}")
+
+    print("\n=== Part B: Arithmetic ===")
+    math201 = GradeBook("Math 201")
+    math201["Alice"] = 85
+    math201["Bob"] = 90
+    math201["Eve"] = 76
+
+    combined = cs101 + math201
+    print(f"\n{combined}")
+    print("Merged grades:")
+    for student in combined:
+        print(f" {student}: {combined[student]}")
+
+    curved = math201 * 1.1
+    print(f"\n{curved}")
+    print("Curved grades:")
+    for student in curved:
+        print(f" {student}: {curved[student]}")
+
+    big_curve = math201 * 1.5
+    print(f"\nBig curve — Bob's grade: {big_curve['Bob']}")
+
+    # Test in-place merging
+    cs101 += math201
+
+    print("\n=== Part C: Comparisons ===")
+    print(f"CS 101 average: {cs101.average:.2f}")
+    print(f"Math 201 average: {math201.average:.2f}")
+    print(f"CS 101 == Math 201? {cs101 == math201}")
+    print(f"Math 201 < CS 101? {math201 < cs101}")
+    print(f"Math 201 <= CS 101? {math201 <= cs101}")
+
+    classes = [math201, GradeBook("Temporary"), curved]
+    classes[1]["Student"] = 88
+    classes.sort()
+
+    print("\nSorted by average:")
+    for gb in classes:
+        print(f" {gb} — avg: {gb.average:.2f}")
